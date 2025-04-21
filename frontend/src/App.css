@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+
+
+@media screen and (min-width: 376px) {
+  .on_small {
+    flex-direction: row;
+    margin-top: 0;
+  }
+  .related-product-margin {
+    margin-top: 0.5rem; /* mt-2 in Tailwind (8px) */
+  }
+}
+   
