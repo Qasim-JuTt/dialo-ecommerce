@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Layout from "../../layout/Layout";
 import Button from "../../components/Button";
 import CollectionCards from "./CardCollections";
@@ -6,6 +6,49 @@ import Gallery from "./Gallery";
 import TopCategoriesCarousel from "./TopCategories";
 
 const Home = () => {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const response = await fetch('http://localhost:5000/api/products/getAllProducts');
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        const data = await response.json();
+        setProducts(data);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-screen">
+          <p>Loading products...</p>
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex justify-center items-center h-screen">
+          <p className="text-red-500">Error: {error}</p>
+        </div>
+      </Layout>
+    );
+  }
+
   return (
     <Layout>
       {/* Hero Section */}
@@ -13,7 +56,7 @@ const Home = () => {
         className="relative w-full h-screen bg-cover bg-center"
         style={{
           backgroundImage: `url(https://images.unsplash.com/photo-1556909212-d5b604d0c90d?ixlib=rb-1.2.1&auto=format&fit=crop&w=1350&q=80)`,
-          backgroundColor: "#f5f5f5", // Fallback color
+          backgroundColor: "#f5f5f5",
         }}
       >
         <div className="absolute inset-0 bg-black bg-opacity-50"></div>
@@ -61,7 +104,7 @@ const Home = () => {
         </div>
       </section>
       
-      <CollectionCards />
+      <CollectionCards products={products} />
       <TopCategoriesCarousel />
       
       <Gallery />
