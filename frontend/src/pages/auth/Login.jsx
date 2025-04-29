@@ -16,9 +16,9 @@ const Login = () => {
 
   return (
     <Layout>
-      <section className="bg-gray-100 py-6 sm:py-12">
+      <section className="py-2 sm:py-4">
         <div className="container mx-auto px-4">
-          <div className="max-w-md mx-auto bg-white p-8 rounded-2xl my-2 sm:my-4 md:my-8 lg:my-12">
+          <div className="max-w-md mx-auto bg-white p-8 rounded-2xl my-4">
             <h2 className="text-3xl font-bold text-center text-teal-600 mb-6">Login to Your Account</h2>
 
             {/* Social Buttons */}
@@ -74,7 +74,7 @@ const Login = () => {
 
             <p className="mt-4 text-sm text-center text-gray-600">
               Don't have an account?{' '}
-              <a href="/signup" className="text-teal-600 hover:underline">
+              <a href="/sign-up" className="text-teal-600 hover:underline">
                 Sign up
               </a>
             </p>
@@ -84,6 +84,5 @@ const Login = () => {
     </Layout>
   )
 }
-
 
 export default Login

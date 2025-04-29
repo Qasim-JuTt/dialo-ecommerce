@@ -32,7 +32,9 @@ const productSchema = new mongoose.Schema({
       validator: arr => arr.length > 0,
       message: 'Images array cannot be empty'
     }
-  }
+  },
+  relatedProducts: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Product' }], // Related products array
+
 }, { timestamps: true });
 
 export default mongoose.model('Product', productSchema);

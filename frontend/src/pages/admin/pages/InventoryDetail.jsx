@@ -1,48 +1,40 @@
-import React, { useState } from 'react';
-import SideBar from '../../../components/admin/SideBar';
-import SearchBar from '../../../components/admin/SearchBar';
-import { FiTrash2, FiEdit, FiPlus } from 'react-icons/fi';
-import { Link } from "react-router-dom";
-
-const inventoryData = [
-  {
-    id: 1,
-    name: 'Apple iPhone 14',
-    color: 'Midnight Black',
-    category: 'Smartphone',
-    quantity: 120,
-    status: 'In Stock',
-    image:
-      'https://images.unsplash.com/photo-1603791440384-56cd371ee9a7?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 2,
-    name: 'Samsung Galaxy S22',
-    color: 'Phantom White',
-    category: 'Smartphone',
-    quantity: 45,
-    status: 'Low Stock',
-    image:
-      'https://images.unsplash.com/photo-1603791440384-56cd371ee9a7?auto=format&fit=crop&w=800&q=80',
-  },
-  {
-    id: 3,
-    name: 'Google Pixel 7',
-    color: 'Obsidian',
-    category: 'Smartphone',
-    quantity: 0,
-    status: 'Out of Stock',
-    image:
-      'https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=500&q=80',
-  },
-];
-
-
-
+import React, { useState, useEffect } from "react";
+import axios from "axios";
+import SideBar from "../../../components/admin/SideBar";
+import SearchBar from "../../../components/admin/SearchBar";
+import { FiTrash2, FiEdit, FiPlus } from "react-icons/fi";
+import { Link, useParams } from "react-router-dom";
+import Pagination from "../../../components/admin/Pagination";
 
 const InventoryDetail = () => {
+  const { mainCategory, category } = useParams();
+  const [inventoryData, setInventoryData] = useState([]);
   const [previewImage, setPreviewImage] = useState(null);
-  const [position, setPosition] = useState({ x: 0, y: 0 });  
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+
+  // Pagination states
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
+  const totalPages = Math.ceil(inventoryData.length / itemsPerPage);
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  const fetchInventory = async () => {
+    try {
+      const res = await axios.get(
+        `http://localhost:5000/api/inventory/allfetch/${mainCategory}/${category}`
+      );
+      setInventoryData(res.data);
+    } catch (error) {
+      console.error("Error fetching inventory:", error);
+    }
+  };
+
+  const handlePageChange = (pageNumber) => {
+    setCurrentPage(pageNumber);
+  };
 
   const handleMouseEnter = (e, imageUrl) => {
     const rect = e.currentTarget.getBoundingClientRect();
@@ -54,30 +46,27 @@ const InventoryDetail = () => {
     setPreviewImage(null);
   };
 
-  const handleEdit = (productId) => {
-    console.log('Edit product:', productId);
-    // Add your edit logic here
+  const handleDelete = (productId) => {
+    console.log("Delete product:", productId);
   };
 
-  const handleDelete = (productId) => {
-    console.log('Delete product:', productId);
-    // Add your delete logic here
-  };
+  // Pagination logic: slice inventory data
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = inventoryData.slice(indexOfFirstItem, indexOfLastItem);
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100 relative">
       <SideBar activeLink="inventory" />
 
       <main className="flex-1 p-6 space-y-6 relative z-10">
-        {/* Page Title with SearchBar and Add Button */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-4">
           <h1 className="text-2xl md:text-3xl font-bold text-indigo-600">
             Manage Products
           </h1>
 
           <div className="max-w-md">
-          <SearchBar placeholder="Search..." />
-
+            <SearchBar placeholder="Search..." />
           </div>
 
           <Link
@@ -103,14 +92,19 @@ const InventoryDetail = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {inventoryData.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50 transition">
+                {currentItems.map((product) => (
+                  <tr key={product._id} className="hover:bg-gray-50 transition">
                     <td className="py-4 pr-4">
                       <img
-                        src={product.image}
+                        src={`http://localhost:5000/uploads/${product.images[0]}`}
                         alt={product.name}
                         className="w-10 h-10 object-cover rounded cursor-pointer"
-                        onMouseEnter={(e) => handleMouseEnter(e, product.image)}
+                        onMouseEnter={(e) =>
+                          handleMouseEnter(
+                            e,
+                            `http://localhost:5000/uploads/${product.images[0]}`
+                          )
+                        }
                         onMouseLeave={handleMouseLeave}
                       />
                     </td>
@@ -127,26 +121,27 @@ const InventoryDetail = () => {
                     <td className="py-4 pr-4">
                       <span
                         className={`inline-block px-2 py-1 text-xs font-semibold rounded-full whitespace-nowrap ${
-                          product.status === 'In Stock'
-                            ? 'bg-green-100 text-green-600'
-                            : product.status === 'Low Stock'
-                            ? 'bg-yellow-100 text-yellow-600'
-                            : 'bg-red-100 text-red-600'
+                          product.status === "In Stock"
+                            ? "bg-green-100 text-green-600"
+                            : product.status === "Low Stock"
+                            ? "bg-yellow-100 text-yellow-600"
+                            : "bg-red-100 text-red-600"
                         }`}
                       >
                         {product.status}
                       </span>
                     </td>
                     <td className="py-4 pr-4 flex space-x-2">
-                      <button
-                        onClick={() => handleEdit(product.id)}
-                        className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition"
+                      <Link
+                        to={`/admin-updateInventory-page/${product._id}`}
                         title="Edit"
                       >
-                        <FiEdit size={16} />
-                      </button>
+                        <button className="p-1 text-indigo-600 hover:text-indigo-800 hover:bg-indigo-50 rounded transition">
+                          <FiEdit size={16} />
+                        </button>
+                      </Link>
                       <button
-                        onClick={() => handleDelete(product.id)}
+                        onClick={() => handleDelete(product._id)}
                         className="p-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded transition"
                         title="Delete"
                       >
@@ -158,7 +153,7 @@ const InventoryDetail = () => {
               </tbody>
             </table>
 
-            {/* Tooltip Preview Image */}
+            {/* Tooltip Preview */}
             {previewImage && (
               <div
                 className="fixed z-50 pointer-events-none transition-opacity duration-150"
@@ -176,6 +171,15 @@ const InventoryDetail = () => {
             )}
           </div>
         </div>
+
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <Pagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={handlePageChange}
+          />
+        )}
       </main>
     </div>
   );

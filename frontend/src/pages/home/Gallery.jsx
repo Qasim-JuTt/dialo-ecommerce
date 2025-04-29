@@ -56,7 +56,7 @@ const Gallery = () => {
       <p className="text-gray-600 text-center max-w-lg mb-6">
         These are many variations of passages of Lorem Ipsum available, but the majority have suffered alteration in some form.
       </p>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl w-full">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-6xl">
         {images.map((item) => (
           <Link key={item.id} to={`/product-detail/${item.id}`}>
             <img

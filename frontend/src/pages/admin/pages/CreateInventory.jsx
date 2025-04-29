@@ -3,7 +3,7 @@ import { Upload, X } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import SideBar from "../../../components/admin/SideBar";
 
 const CreateInventory = () => {
@@ -19,33 +19,15 @@ const CreateInventory = () => {
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
+  const navigate = useNavigate();
 
   const clothingTypes = [
-    "T-Shirt",
-    "Shirt",
-    "Jeans",
-    "Pants",
-    "Shorts",
-    "Jacket",
-    "Sweater",
-    "Hoodie",
-    "Dress",
-    "Skirt",
-    "Activewear",
-    "Swimwear",
-    "Underwear",
-    "Socks",
-    "Footwear",
-    "Accessory"
+    "T-Shirt", "Shirt", "Jeans", "Pants", "Shorts", "Jacket",
+    "Sweater", "Hoodie", "Dress", "Skirt", "Activewear",
+    "Swimwear", "Underwear", "Socks", "Footwear", "Accessory"
   ];
 
-  const genderCategories = [
-    "Men",
-    "Women",
-    "Unisex",
-    "Kids",
-    "Baby"
-  ];
+  const genderCategories = ["Men", "Women", "Unisex", "Kids", "Baby"];
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -96,10 +78,9 @@ const CreateInventory = () => {
           "Content-Type": "multipart/form-data",
         },
       });
-
       toast.success("Product created successfully!");
+      navigate("/admin-inventoryDetail-page");
 
-      // Reset form
       setProductData({
         name: "",
         color: "",
@@ -120,7 +101,19 @@ const CreateInventory = () => {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-gray-100 relative">
-      <ToastContainer position="top-right" autoClose={3000} />
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+
       <SideBar activeLink="inventory" />
 
       <main className="flex-1 p-4 md:p-6">
@@ -135,7 +128,6 @@ const CreateInventory = () => {
           className="bg-white p-6 rounded-2xl shadow-sm"
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Product Information */}
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">

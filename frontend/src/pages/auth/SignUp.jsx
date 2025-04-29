@@ -1,27 +1,85 @@
-import React from 'react'
-import Layout from '../../layout/Layout'
+import React, { useState } from 'react'
 import { FcGoogle } from 'react-icons/fc'
-import { FaFacebook } from 'react-icons/fa'
+import axios from 'axios'
+// import Layout from '../../layout/Layout'
+import { useNavigate } from 'react-router-dom'
 
 const SignUp = () => {
-  const handleGoogleSignUp = () => {
-    // TODO: Integrate Google Sign-In logic
-    console.log('Google sign-up clicked')
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    password: ''
+  })
+  const [errors, setErrors] = useState({})
+  const [isLoading, setIsLoading] = useState(false)
+  const navigate = useNavigate()
+
+  const handleChange = (e) => {
+    const { name, value } = e.target
+    setFormData({
+      ...formData,
+      [name]: value
+    })
+    // Clear error when user types
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: null
+      })
+    }
   }
 
-  const handleFacebookSignUp = () => {
-    // TODO: Integrate Facebook Sign-In logic
-    console.log('Facebook sign-up clicked')
+  const validateForm = () => {
+    const newErrors = {}
+    if (!formData.name.trim()) newErrors.name = 'Name is required'
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required'
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email'
+    }
+    if (!formData.password) {
+      newErrors.password = 'Password is required'
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters'
+    }
+    
+    setErrors(newErrors)
+    return Object.keys(newErrors).length === 0
   }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (!validateForm()) return
+
+    setIsLoading(true)
+    try {
+      const response = await axios.post('http://localhost:5000/api/auth/signup', formData)
+      
+      // Handle successful signup
+      console.log('Signup successful:', response.data)
+      alert('Registration successful! Please login.')
+      navigate('/login-page')
+    } catch (error) {
+      console.error('Signup error:', error.response?.data || error.message)
+      alert(error.response?.data?.message || 'Registration failed. Please try again.')
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const handleGoogleSignUp = () => {
+    window.open('http://localhost:5000/api/auth/google', '_self')
+  }
+  
 
   return (
-    <Layout>
-      <section className="bg-gray-100 py-6 sm:py-12">
+    <>
+      <section className="py-2 sm:py-4">
         <div className="container mx-auto px-4">
-          <div className="max-w-md mx-auto bg-white p-8 rounded-2xl my-2 sm:my-4 md:my-8 lg:my-12">
+          <div className="max-w-md mx-auto bg-white p-8 rounded-2xl my-4">
             <h2 className="text-3xl font-bold text-center text-teal-600 mb-6">Create Your Account</h2>
 
-            {/* Social Buttons */}
+            {/* Google Sign-Up Button */}
             <div className="flex flex-col gap-3 mb-6">
               <button
                 onClick={handleGoogleSignUp}
@@ -29,13 +87,6 @@ const SignUp = () => {
               >
                 <FcGoogle className="text-xl" />
                 <span className="text-sm font-medium">Sign up with Google</span>
-              </button>
-              <button
-                onClick={handleFacebookSignUp}
-                className="flex items-center justify-center gap-3 w-full bg-teal-600 text-white py-2 rounded-lg hover:bg-blue-700 transition"
-              >
-                <FaFacebook className="text-xl" />
-                <span className="text-sm font-medium">Sign up with Facebook</span>
               </button>
             </div>
 
@@ -47,49 +98,68 @@ const SignUp = () => {
             </div>
 
             {/* Sign-Up Form */}
-            <form className="space-y-4">
+            <form className="space-y-4" onSubmit={handleSubmit}>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
                 <input
                   type="text"
+                  name="name"
                   placeholder="John Doe"
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  value={formData.name}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                    errors.name ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {errors.name && <p className="mt-1 text-sm text-red-500">{errors.name}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                 <input
                   type="email"
+                  name="email"
                   placeholder="you@example.com"
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  value={formData.email}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                    errors.email ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {errors.email && <p className="mt-1 text-sm text-red-500">{errors.email}</p>}
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
                 <input
                   type="password"
+                  name="password"
                   placeholder="••••••••"
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 ${
+                    errors.password ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 />
+                {errors.password && <p className="mt-1 text-sm text-red-500">{errors.password}</p>}
               </div>
               <button
                 type="submit"
-                className="w-full bg-teal-600 text-white py-2 rounded-lg hover:bg-teal-700 transition duration-300"
+                disabled={isLoading}
+                className="w-full bg-teal-600 text-white py-2 rounded-lg hover:bg-teal-700 transition duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                Sign Up
+                {isLoading ? 'Signing Up...' : 'Sign Up'}
               </button>
             </form>
 
             <p className="mt-4 text-sm text-center text-gray-600">
               Already have an account?{' '}
-              <a href="/login" className="text-teal-600 hover:underline">
+              <a href="/login-page" className="text-teal-600 hover:underline">
                 Log in
               </a>
             </p>
           </div>
         </div>
       </section>
-    </Layout>
+    </>
   )
 }
 

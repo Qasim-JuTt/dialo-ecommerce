@@ -4,6 +4,7 @@ import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import Select from 'react-select';
 
 import SideBar from "../../../components/admin/SideBar";
 
@@ -23,16 +24,25 @@ const UpdateProduct = () => {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
   const [existingImages, setExistingImages] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [relatedProducts, setRelatedProducts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  // console.log(id)
+
   useEffect(() => {
-    const fetchProduct = async () => {
+    const fetchProductAndOptions = async () => {
       try {
-        const response = await axios.get(
+        // Fetch the current product
+        const productResponse = await axios.get(
           `http://localhost:5000/api/products/getProduct/${id}`
         );
-        const product = response.data;
-        console.log("error product fetching", product);
+        const product = productResponse.data;
+
+        // Fetch all products for related products options
+        const allProductsResponse = await axios.get(
+          `http://localhost:5000/api/products/getAllProducts`
+        );
+        
+        setAllProducts(allProductsResponse.data);
 
         setProductData({
           name: product.name,
@@ -44,7 +54,17 @@ const UpdateProduct = () => {
           images: product.images,
         });
 
-        const imageBaseUrl = "http://localhost:5000/uploads/"; // adjust path if needed
+        // Set related products
+        if (product.relatedProducts && product.relatedProducts.length > 0) {
+          setRelatedProducts(product.relatedProducts.map(p => ({
+            value: p._id,
+            label: p.name,
+            image: p.images[0] ? `http://localhost:5000/uploads/${p.images[0]}` : null,
+            price: p.price
+          })));
+        }
+
+        const imageBaseUrl = "http://localhost:5000/uploads/";
         setExistingImages(
           product.images.map((img) => ({
             url: `${imageBaseUrl}${img}`,
@@ -56,12 +76,21 @@ const UpdateProduct = () => {
       } catch (error) {
         console.error(error);
         toast.error("Failed to fetch product data");
-        // navigate('/admin-product-page');
       }
     };
 
-    fetchProduct();
+    fetchProductAndOptions();
   }, [id, navigate]);
+
+  // Format options for react-select
+  const relatedOptions = allProducts
+    .filter(product => product._id !== id) // Exclude current product from options
+    .map(product => ({
+      value: product._id,
+      label: product.name,
+      image: product.images[0] ? `http://localhost:5000/uploads/${product.images[0]}` : null,
+      price: product.price
+    }));
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -84,22 +113,21 @@ const UpdateProduct = () => {
     setPreviewImages(updatedPreviews);
   };
 
+  const handleRelatedChange = (selected) => {
+    setRelatedProducts(selected || []);
+  };
+
   const removeImage = (index, isExisting) => {
     if (isExisting) {
-      // Remove from existing images
       const newExisting = [...existingImages];
       newExisting.splice(index, 1);
       setExistingImages(newExisting);
     } else {
-      // Remove from new previews and selected files
       const newPreviews = [...previewImages];
       const newFiles = [...selectedFiles];
-
-      // Adjust index for previewImages since it's only new images
       const previewIndex = index - existingImages.length;
       newPreviews.splice(previewIndex, 1);
       newFiles.splice(previewIndex, 1);
-
       setPreviewImages(newPreviews);
       setSelectedFiles(newFiles);
     }
@@ -117,11 +145,13 @@ const UpdateProduct = () => {
     formData.append("status", productData.status);
 
     // Extract filenames from existing image URLs
-const remainingExistingImages = existingImages.map((img) =>
-  img.url.split("/").pop()
-);
-formData.append("existingImages", JSON.stringify(remainingExistingImages));
+    const remainingExistingImages = existingImages.map((img) =>
+      img.url.split("/").pop()
+    );
+    formData.append("existingImages", JSON.stringify(remainingExistingImages));
 
+    // Append related products
+    formData.append("relatedProducts", JSON.stringify(relatedProducts.map(p => p.value)));
 
     // Append new files
     selectedFiles.forEach((file) => {
@@ -150,6 +180,23 @@ formData.append("existingImages", JSON.stringify(remainingExistingImages));
       toast.error(msg);
     }
   };
+
+  // Custom option component to show product image and name
+  const formatOptionLabel = ({ label, image, price }) => (
+    <div className="flex items-center">
+      {image && (
+        <img 
+          src={image} 
+          alt={label} 
+          className="w-8 h-8 mr-2 rounded-sm object-cover"
+        />
+      )}
+      <div>
+        <div>{label}</div>
+        <div className="text-xs text-gray-500">${price}</div>
+      </div>
+    </div>
+  );
 
   if (isLoading) {
     return (
@@ -278,6 +325,35 @@ formData.append("existingImages", JSON.stringify(remainingExistingImages));
                     <option value="Pre-order">Pre-order</option>
                   </select>
                 </div>
+              </div>
+
+              {/* Related Products Section */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Related Products
+                </label>
+                <Select
+                  isMulti
+                  options={relatedOptions}
+                  value={relatedProducts}
+                  onChange={handleRelatedChange}
+                  formatOptionLabel={formatOptionLabel}
+                  getOptionValue={option => option.value}
+                  className="react-select-container"
+                  classNamePrefix="react-select"
+                  placeholder="Select related products..."
+                  noOptionsMessage={() => "No products available"}
+                  styles={{
+                    option: (provided) => ({
+                      ...provided,
+                      padding: '8px 12px',
+                    }),
+                    control: (provided) => ({
+                      ...provided,
+                      minHeight: '44px',
+                    }),
+                  }}
+                />
               </div>
             </div>
 

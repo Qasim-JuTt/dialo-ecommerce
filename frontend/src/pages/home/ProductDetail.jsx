@@ -1,13 +1,53 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import Layout from "../../layout/Layout";
-import ShippingInfo from "../../components/ShippingInfo";
 import Card from "../../components/Card";
 import ProductBrandDetails from "./ProductBrandDetail";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { FiPlus, FiX } from "react-icons/fi";
+import { FcGoogle } from "react-icons/fc";
+import { useCart } from "../../context/CartContext";
+import { ToastContainer, toast } from 'react-toastify';
+
 
 const ProductDetail = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [user, setUser] = useState(null);
+  const [loginForm, setLoginForm] = useState({
+    phoneOrEmail: "",
+    password: "",
+  });
+  const [loginError, setLoginError] = useState("");
+  const { addToCart } = useCart();
+
+  // Products array defined at the top
+  const products = [
+    {
+      id: id,
+      title: "Men's Casual Slim Fit T-Shirts (Pack of 3)",
+      verified: true,
+      price: "$24.99-29.99",
+      minOrder: "2 pieces",
+      images: [
+        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&auto=format&fit=crop&q=60",
+        "https://images.unsplash.com/photo-1527719327859-c6ce80353573?w=500&auto=format&fit=crop&q=60",
+        "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=500&auto=format&fit=crop&q=60",
+      ],
+      ad: true,
+      link: "/product-detail",
+    },
+  ];
+
+  const product = products[0];
+
+  // Check for user in localStorage on component mount
+  useEffect(() => {
+    const userData = localStorage.getItem("user");
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+  }, []);
+
   const thumbnails = [
     {
       img: "https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=500&q=80",
@@ -50,11 +90,38 @@ const ProductDetail = () => {
   const [showZoom, setShowZoom] = useState(false);
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 });
   const [quantity, setQuantity] = useState(1);
-  const [showAddressModal, setShowAddressModal] = useState(false);
-  const [address, setAddress] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [error, setError] = useState("");
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showSignupModal, setShowSignupModal] = useState(false);
   const imgRef = useRef(null);
+
+  const handleAddToCart = () => {
+    if (!user) {
+      setShowLoginModal(true);
+      return;
+    }
+  
+    addToCart({
+      id: product.id,
+      name: product.title,
+      image: mainImage,
+      price: parseFloat(product.price.replace('$', '')),
+      selectedColor: colorImages[selectedColor].name,
+      selectedSize: selectedSize,
+      quantity: quantity,
+    });
+  
+    toast.success(`${product.title} added to cart!`, {
+      position: "top-center",
+      autoClose: 2000,
+      hideProgressBar: false,
+      closeOnClick: true,
+      pauseOnHover: true,
+      draggable: true,
+      progress: undefined,
+      theme: "light",
+    });
+  };
+  
 
   const handleThumbnailClick = (img) => setMainImage(img);
   const handleColorClick = (img, index) => {
@@ -75,171 +142,284 @@ const ProductDetail = () => {
   };
 
   const handleBuyNow = () => {
-    if (!address || !phoneNumber) {
-      setError("Please add your address and phone number before purchasing");
-      setShowAddressModal(true);
+    if (!user) {
+      setShowLoginModal(true);
       return;
     }
-    // Proceed with purchase
-    alert(`Order placed successfully! Shipping to: ${address}`);
+    navigate("/checkout");
   };
 
-  const handleSaveAddress = () => {
-    if (!address.trim() || !phoneNumber.trim()) {
-      setError("Both address and phone number are required");
+  const handleGoogleSignUp = () => {
+    window.open("http://localhost:5000/api/auth/google", "_self");
+  };
+
+  const handleLoginChange = (e) => {
+    const { name, value } = e.target;
+    setLoginForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleLoginSubmit = (e) => {
+    e.preventDefault();
+    if (!loginForm.phoneOrEmail || !loginForm.password) {
+      setLoginError("Please enter both phone/email and password");
       return;
     }
-    setError("");
-    setShowAddressModal(false);
-  };
 
-  const products = [
-    {
-      id: id,
-      title: "Men's Casual Slim Fit T-Shirts (Pack of 3)",
-      verified: true,
-      price: "$24.99-29.99",
-      minOrder: "2 pieces",
-      images: [
-        "https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1527719327859-c6ce80353573?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1529374255404-311a2a4f1fd9?w=500&auto=format&fit=crop&q=60",
-      ],
-      ad: true,
-      link: "/product-detail",
-    },
-    {
-      id: id,
-      title: "Women's Floral Summer Dress",
-      verified: true,
-      price: "$35.50-45.80",
-      minOrder: "1 piece",
-      images: [
-        "https://images.unsplash.com/photo-1585487000160-6ebcfceb0d03?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1581044777550-4cfa60707c03?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&auto=format&fit=crop&q=60",
-      ],
-      ad: true,
-      link: "/product-detail",
-    },
-    {
-      id: id,
-      title: "Unisex Hooded Sweatshirt (Multiple Colors)",
-      verified: false,
-      price: "$39.99",
-      minOrder: "1 piece",
-      images: [
-        "https://images.unsplash.com/photo-1620799140408-edc6dcb6d633?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1620799139834-6b8f8448be1b?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1620799139652-715e4d5b232d?w=500&auto=format&fit=crop&q=60",
-      ],
-      ad: true,
-      link: "/product-detail",
-    },
-    {
-      id: id,
-      title: "Women's High-Waist Yoga Pants",
-      verified: false,
-      price: "$28.50",
-      minOrder: "1 piece",
-      images: [
-        "https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1583744946564-b52d01e2da64?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1594633312681-425c7b97ccd1?w=500&auto=format&fit=crop&q=60",
-      ],
-      ad: true,
-      link: "/product-detail",
-    },
-    {
-      id: id,
-      title: "Men's Classic Denim Jeans",
-      verified: false,
-      price: "$49.99",
-      minOrder: "1 piece",
-      images: [
-        "https://images.unsplash.com/photo-1473966968600-fa801b869a1a?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1542272604-787c3835535d?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1472749591034-046ab199b537?w=500&auto=format&fit=crop&q=60",
-      ],
-      ad: true,
-      link: "/product-detail",
-    },
-    {
-      id: id,
-      title: "Women's Winter Knit Sweater",
-      verified: false,
-      price: "$45.00",
-      minOrder: "1 piece",
-      images: [
-        "https://images.unsplash.com/photo-1551232864-3f0890e580d9?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1551232864-3f0890e580d9?w=500&auto=format&fit=crop&q=60",
-        "https://images.unsplash.com/photo-1551488831-00ddcb6d6bd3?w=500&auto=format&fit=crop&q=60",
-      ],
-      ad: true,
-      link: "/product-detail",
-    },
-  ];
+    const userData = {
+      id: "123",
+      name: "John Doe",
+      email: "john@example.com",
+    };
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
+    setShowLoginModal(false);
+    setLoginError("");
+  };
 
   return (
     <Layout>
-      {/* Address Modal */}
-      {showAddressModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      {/* Add ToastContainer at the root of your component */}
+      <ToastContainer 
+        position="top-center"
+        autoClose={2000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
             <button
               onClick={() => {
-                setShowAddressModal(false);
-                setError("");
+                setShowLoginModal(false);
+                setLoginError("");
               }}
               className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
             >
               <FiX className="w-5 h-5" />
             </button>
-            <h3 className="text-lg font-medium mb-4">Add Shipping Details</h3>
-            {error && <div className="text-red-500 text-sm mb-4">{error}</div>}
-            <div className="space-y-4">
+            <h3 className="text-lg font-medium mb-6 text-center">Login</h3>
+
+            <form onSubmit={handleLoginSubmit} className="space-y-4">
+              {loginError && (
+                <div className="text-red-500 text-sm text-center">
+                  {loginError}
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Address
-                </label>
-                <textarea
-                  value={address}
-                  onChange={(e) => setAddress(e.target.value)}
-                  className="w-full border rounded-md p-2 text-sm"
-                  rows={4}
-                  placeholder="Enter your full address"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
+                  Phone or Email
                 </label>
                 <input
-                  type="tel"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  type="text"
+                  name="phoneOrEmail"
+                  value={loginForm.phoneOrEmail}
+                  onChange={handleLoginChange}
                   className="w-full border rounded-md p-2 text-sm"
-                  placeholder="Enter your phone number"
+                  placeholder="Please enter your Phone or Email"
                 />
               </div>
-              <div className="flex justify-end gap-3">
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={loginForm.password}
+                  onChange={handleLoginChange}
+                  className="w-full border rounded-md p-2 text-sm"
+                  placeholder="Please enter your password"
+                />
+              </div>
+
+              <div className="text-right">
+                <a href="#" className="text-sm text-blue-600 hover:underline">
+                  Forgot password?
+                </a>
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium"
+              >
+                LOGIN
+              </button>
+
+              <div className="text-center text-sm">
+                <p className="text-gray-600">
+                  Don't have an account?{" "}
+                  <button
+                    type="button"
+                    className="text-blue-600 hover:underline"
+                    onClick={() => {
+                      setShowLoginModal(false);
+                      setShowSignupModal(true);
+                    }}
+                  >
+                    Sign up
+                  </button>
+                </p>
+              </div>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-2 text-sm text-gray-500">
+                    Or, login with
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-center gap-4">
                 <button
-                  onClick={() => {
-                    setShowAddressModal(false);
-                    setError("");
-                  }}
-                  className="px-4 py-2 border rounded-md text-sm"
+                  type="button"
+                  onClick={handleGoogleSignUp}
+                  className="flex items-center justify-center gap-3 w-full border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition"
                 >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSaveAddress}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md text-sm"
-                >
-                  Save Details
+                  <FcGoogle className="text-xl" />
+                  <span className="text-sm font-medium">
+                    Sign up with Google
+                  </span>
                 </button>
               </div>
-            </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Signup Modal */}
+      {showSignupModal && (
+        <div className="fixed inset-0 bg-black/45 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg max-w-md w-full p-6 relative">
+            <button
+              onClick={() => setShowSignupModal(false)}
+              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+            >
+              <FiX className="w-5 h-5" />
+            </button>
+            <h3 className="text-lg font-medium mb-6 text-center">Create Account</h3>
+
+            <form className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Full Name
+                </label>
+                <input
+                  type="text"
+                  className="w-full border rounded-md p-2 text-sm"
+                  placeholder="Enter your full name"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  className="w-full border rounded-md p-2 text-sm"
+                  placeholder="Enter your email"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  className="w-full border rounded-md p-2 text-sm"
+                  placeholder="Create a password"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Confirm Password
+                </label>
+                <input
+                  type="password"
+                  className="w-full border rounded-md p-2 text-sm"
+                  placeholder="Confirm your password"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md font-medium"
+                onClick={(e) => {
+                  e.preventDefault();
+                  const userData = {
+                    id: "123",
+                    name: "New User",
+                    email: "new@example.com",
+                  };
+                  localStorage.setItem("user", JSON.stringify(userData));
+                  setUser(userData);
+                  setShowSignupModal(false);
+                }}
+              >
+                SIGN UP
+              </button>
+
+              <div className="text-center text-sm">
+                <p className="text-gray-600">
+                  Already have an account?{" "}
+                  <button
+                    type="button"
+                    className="text-blue-600 hover:underline"
+                    onClick={() => {
+                      setShowSignupModal(false);
+                      setShowLoginModal(true);
+                    }}
+                  >
+                    Login
+                  </button>
+                </p>
+              </div>
+
+              <div className="relative my-4">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-gray-300"></div>
+                </div>
+                <div className="relative flex justify-center">
+                  <span className="bg-white px-2 text-sm text-gray-500">
+                    Or, sign up with
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-center gap-4">
+                <button
+                  type="button"
+                  onClick={handleGoogleSignUp}
+                  className="flex items-center justify-center gap-3 w-full border border-gray-300 py-2 rounded-lg hover:bg-gray-100 transition"
+                >
+                  <FcGoogle className="text-xl" />
+                  <span className="text-sm font-medium">
+                    Continue with Google
+                  </span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}
@@ -385,33 +565,6 @@ const ProductDetail = () => {
                 </div>
               </div>
 
-              {/* Shipping Address Section */}
-              <div className="border backdrop-blur-sm rounded-lg p-4">
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-medium text-gray-900">Shipping Details</h3>
-                  <button
-                    onClick={() => setShowAddressModal(true)}
-                    className="text-blue-600 flex items-center gap-1"
-                  >
-                    <FiPlus className="w-4 h-4" />
-                    {address && phoneNumber ? "Edit" : "Add"}
-                  </button>
-                </div>
-
-                {address && phoneNumber ? (
-                  <div className="text-sm text-gray-700">
-                    <div className="font-medium">Address:</div>
-                    <div className="mb-2">{address}</div>
-                    <div className="font-medium">Phone:</div>
-                    <div>{phoneNumber}</div>
-                  </div>
-                ) : (
-                  <div className="text-sm text-gray-500">
-                    Please add your shipping address and phone number
-                  </div>
-                )}
-              </div>
-
               {/* Buttons - Sticky on Mobile */}
               <div className="flex gap-4 mt-6 md:static fixed bottom-0 left-0 w-full bg-white p-4 border-t md:border-none md:p-0 z-40">
                 <button
@@ -420,27 +573,25 @@ const ProductDetail = () => {
                 >
                   Buy now
                 </button>
-                <button className="flex-1 bg-gray-200 text-gray-800 py-3 px-6 rounded-md font-medium">
-                  Add to cart
+                <button
+                  onClick={handleAddToCart}
+                  className="bg-black text-white px-6 py-3 rounded-md hover:bg-gray-800 transition font-semibold"
+                >
+                  Add to Cart
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Related Products & Shipping Info */}
+        {/* Related Products & Brand Details */}
         <div className="mt-10 flex related-product-margin flex-col lg:flex-row gap-8 sm:mt-0">
-          <div className="lg:w-3/4">
+          <div className="w-full">
             <h2 className="text-xl font-semibold text-gray-900 mb-4">
               You may also like
             </h2>
             <Card products={products} />
             <ProductBrandDetails />
-          </div>
-          <div className="lg:w-1/4 mt-6">
-            <div className="sticky top-24">
-              <ShippingInfo />
-            </div>
           </div>
         </div>
       </div>
