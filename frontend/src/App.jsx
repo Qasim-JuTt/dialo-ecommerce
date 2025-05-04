@@ -45,7 +45,7 @@ function App() {
 
 
         {/* Home page routes */}
-        <Route path="/" element={<Home />} />
+        <Route path="/home" element={<Home />} />
         <Route path="/product-detail/:id?" element={<ProductDetail />} />
 
 
@@ -54,7 +54,7 @@ function App() {
         {/* Auth Route  Url */}
         <Route path="/admin-login" element={<AdminLogin />} />
         <Route path="/admin-sidebar-page" element={<SideBar />} />
-        <Route path="/admin-dashboard-page" element={<Dashboard />} />
+        <Route path="/" element={<Dashboard />} />
         <Route path="/admin-order-page" element={<Orders />} />
         <Route path="/admin-product-page" element={<Product />} />
         <Route path="/admin-customer-page" element={<Customer />} />
@@ -76,12 +76,8 @@ function App() {
         {/* User CheckOut  Route  Url */}
         <Route path="/checkout" element={<CheckOut />} />
         <Route path="/sidebar" element={<Sidebar />} />
-        <Route path="/order" element={<Order />} />
+        <Route path="/orders" element={<Order />} />
         <Route path="/cart" element={<CartPage />} />
-
-
-
-
       </Routes>
     </Router>
     </CartProvider>

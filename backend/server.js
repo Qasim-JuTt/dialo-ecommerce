@@ -1,56 +1,34 @@
-import express from 'express';
-import dotenv from 'dotenv';
-import cors from 'cors';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import productRoutes from './routes/productRoutes.js';
-import inventoryRoutes from './routes/inventoryRoutes.js';
-import session from 'express-session'
-import passport from 'passport'
-import mainInventoryRoutes from './routes/mainInventoryRoutes.js';
-import authRoutes from './routes/authRoutes.js'
-import './config/passportConfig.js' // path to your passport config file
-
-import dbConnect from './config/dbConnect.js';
-import morgan from 'morgan';
-
+const express = require('express');
+const cors = require('cors');
+const dotenv = require('dotenv');
+const productRoutes = require('./routes/productRoutes');
+const path = require('path');
 
 dotenv.config();
-dbConnect();
 
 const app = express();
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-app.use(morgan('dev'));
+// Middleware
+app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Make uploads folder publicly accessible
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
-}))
 
-app.use(session({
-  secret: process.env.YOUR_SECRET_KEY,
-  resave: false,
-  saveUninitialized: true
-}))
+// Routes
+app.use('/api/products', productRoutes);
 
-app.use(passport.initialize())
-app.use(passport.session())
+// Error handling middleware
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).json({
+    success: false,
+    message: err.message || 'Something went wrong!'
+  });
+});
 
-
-// Auth Route
-app.use('/api/auth', authRoutes)
-
-// Routes of Website
-app.use('/api/products', productRoutes);    // Product
-app.use('/api/inventory', inventoryRoutes);  //Inventory
-app.use('/api/mainInventory', mainInventoryRoutes); //Main Inventory
-
-
-
-// Start server
 const PORT = process.env.PORT || 6000;
 app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

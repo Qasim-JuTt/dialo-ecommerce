@@ -1,10 +1,9 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Upload, X } from "lucide-react";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import axios from "axios";
 import { Link } from "react-router-dom";
-import Select from "react-select"; // Import Select
 
 import SideBar from "../../../components/admin/SideBar";
 
@@ -21,44 +20,6 @@ const CreateProduct = () => {
 
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewImages, setPreviewImages] = useState([]);
-  const [relatedOptions, setRelatedOptions] = useState([]);
-  const [relatedProducts, setRelatedProducts] = useState([]);
-
-  // Fetch related products
-  useEffect(() => {
-    const fetchRelatedProducts = async () => {
-      try {
-        const response = await axios.get(
-          "http://localhost:5000/api/products/getAllProducts"
-        ); // Adjust your API if needed
-        const options = response.data.map((prod) => ({
-          value: prod._id,
-          label: (
-            <div className="flex items-center space-x-2">
-              <img
-                src={`http://localhost:5000/uploads/${
-                  prod.images?.[0] || "placeholder.png"
-                }`}
-                alt={prod.name}
-                className="w-6 h-6 object-cover rounded-full"
-              />
-              <span>{prod.name}</span>
-            </div>
-          ),
-          id: prod._id, // for saving
-        }));
-        setRelatedOptions(options);
-      } catch (error) {
-        console.error("Error fetching related products:", error);
-      }
-    };
-
-    fetchRelatedProducts();
-  }, []);
-
-  const handleRelatedChange = (selected) => {
-    setRelatedProducts(selected || []);
-  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -88,7 +49,6 @@ const CreateProduct = () => {
     setPreviewImages(newPreviews);
   };
 
-  // Update handleSubmit to include related product IDs
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -100,13 +60,16 @@ const CreateProduct = () => {
     formData.append("stock", productData.stock);
     formData.append("status", productData.status);
 
-    relatedProducts.forEach((item) => {
-      formData.append("relatedProducts", item.id); // backend field: "relatedProducts"
-    });
-
+    // Append multiple images
     selectedFiles.forEach((file) => {
-      formData.append("images", file);
+      formData.append("images", file); // Or "images[]" depending on your backend
     });
+    console.log(formData)
+
+    // Debug FormData contents
+    // for (let pair of formData.entries()) {
+    //   console.log(pair[0] + ": ", pair[1]);
+    // }
 
     try {
       const response = await axios.post(
@@ -119,7 +82,8 @@ const CreateProduct = () => {
         }
       );
       console.log(response);
-      toast.success("Product created successfully!", response?.data?.message);
+      toast.success("Product created successfully!");
+
       setProductData({
         name: "",
         description: "",
@@ -131,7 +95,6 @@ const CreateProduct = () => {
       });
       setSelectedFiles([]);
       setPreviewImages([]);
-      setRelatedProducts([]);
     } catch (error) {
       console.error(error);
       const msg = error.response?.data?.message || "Something went wrong!";
@@ -156,7 +119,7 @@ const CreateProduct = () => {
           className="bg-white p-6 rounded-2xl shadow-sm"
         >
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Product Information */}
+            {/* Product Info */}
             <div className="space-y-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -283,7 +246,7 @@ const CreateProduct = () => {
                 </div>
               </div>
 
-              {/* Image Previews */}
+              {/* Previews */}
               {previewImages.length > 0 && (
                 <div className="mt-4">
                   <h3 className="text-sm font-medium text-gray-700 mb-2">
@@ -309,28 +272,6 @@ const CreateProduct = () => {
                   </div>
                 </div>
               )}
-              <div className="mt-3">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Related Products
-                </label>
-                <Select
-                  isMulti
-                  options={relatedOptions}
-                  value={relatedProducts}
-                  onChange={handleRelatedChange}
-                  getOptionValue={(e) => e.id}
-                  className="react-select-container"
-                  classNamePrefix="react-select"
-                  placeholder="Select related products..."
-                  styles={{
-                    option: (provided) => ({
-                      ...provided,
-                      display: "flex",
-                      alignItems: "center",
-                    }),
-                  }}
-                />
-              </div>
             </div>
           </div>
 
